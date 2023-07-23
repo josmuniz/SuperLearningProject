@@ -204,7 +204,8 @@ df_KSI_Dropped['ACCLASS'] = np.where(df_KSI_Dropped['ACCLASS'] ==
 
 df_KSI_Dropped.ACCLASS.unique()
 
-df_KSI_Dropped['ACCLASS_TARG'] = df_KSI_Dropped['ACCLASS'].replace({'Fatal': 1, 'No-Fatal': 0})
+df_KSI_Dropped['ACCLASS_TARG'] = df_KSI_Dropped['ACCLASS'].replace({'Fatal': 1,
+                                                                    'No-Fatal': 0})
 
 ROAD_CLASS_data = df_KSI_Dropped.loc[df_KSI_Dropped['ROAD_CLASS'].notnull(),
                                      'ROAD_CLASS'].unique()
@@ -258,7 +259,8 @@ YEAR_data = df_KSI_Dropped.loc[df_KSI_Dropped['YEAR'].notnull(),
 # since a record is created for each person involved in an accident.
 
 # And we need to complete the NaN values of column ACCNUM following the same logic. 
-# We checked that ACCNUM share the same values by accident: year, date, time, street 1, street 2, latitude and longitude and share the same X value.    
+# We checked that ACCNUM share the same values by accident: year, date, time,
+#street 1, street 2, latitude and longitude and share the same X value.    
 # So, we are going to use column 'LATITUD' and 'LONGITUD' to filled value left.
 
 dateList = []
@@ -477,7 +479,8 @@ df_KSI_pivot_cause = df_KSI_Dropped.pivot_table(index='YEAR',
                            margins = True,
                            margins_name = 'Total Under Category')
 fig, ax1 = plt.subplots(figsize=(12,6))
-df_KSI_pivot_cause.iloc[17].plot(kind='pie', ax=ax1, autopct='%3.1f%%',fontsize=10)
+df_KSI_pivot_cause.iloc[17].plot(kind='pie', ax=ax1,
+                                 autopct='%3.1f%%',fontsize=10)
 ax1.set_ylabel('')
 ax1.set_xlabel('Driving condition VS Accidents in Ontario in last 15 years(%age)',
                fontsize=10)
@@ -650,18 +653,20 @@ print(df_KSI_Dropped.dtypes)
 print(df_KSI_Dropped.isnull().sum())
 
 
-############################## SECOND DROP ##################################
+######################### SECOND DROP ####################
 DRIVCOND_data = df_KSI_Dropped.loc[df_KSI_Dropped['DRIVCOND'].notnull(),
                                    'DRIVCOND'].unique()
 # Unknown, Ability Impaired, Alcohol, Normal, Ability Impaired, Alcohol Over .08
 # Inattentive, Had Been Drinking, Medical or Physical Disability
 # Fatigue, Other, Ability Impaired, Drugs
 
+
 MANOEUVER_data = df_KSI_Dropped.loc[df_KSI_Dropped['MANOEUVER'].notnull(),
                                     'MANOEUVER'].unique()
 # example 16 unique --> CANDIDATE DROP
 # Turning Left, Turning Right , Going Ahead, Stopped, Overtaking, Reversing, Other
 # Slowing or Stopping
+
 
 NEIGHBOURHOOD_158_data = df_KSI_Dropped.loc[df_KSI_Dropped['NEIGHBOURHOOD_158'].notnull(),
                                             'NEIGHBOURHOOD_158'].unique()
@@ -702,90 +707,138 @@ HOOD_140_DATA = df_KSI_Dropped.loc[df_KSI_Dropped['HOOD_140'].notnull(),
 
 ACCNUM_data = df_KSI_Dropped.loc[df_KSI_Dropped['ACCNUM'].notnull(),
                                  'ACCNUM'].unique()
-# HAVE 4629 UNIQUE
+# HAVE 4629 UNIQUE --> CANDIDATE TO DROP
 
+DIVISION_data = df_KSI_Dropped.loc[df_KSI_Dropped['DIVISION'].notnull(),
+                                   'DIVISION'].unique()
+# HAVE 17 UNIQUE --> CANDIDATE TO DROP
+
+
+# FATAL_NO_data = df_KSI_Dropped.loc[df_KSI_Dropped['FATAL_NO'].notnull(),
+ # 'FATAL_NO'].unique()
+
+# HAVE 4629 UNIQUE --> CANDIDATE TO DROP
+
+INJURY_data = df_KSI_Dropped.loc[df_KSI_Dropped['INJURY'].notnull(),
+                                 'INJURY'].unique()
+# HAVE 5 UNIQUE --> CANDIDATE TO DROP
+
+DATE_DATA = df_KSI_Dropped.loc[df_KSI_Dropped['DATE'].notnull(),
+                               'DATE'].unique()
+# 3925 UNIQUE DATA. --> CANDIDATE TO DROP
+
+LATITUDE_DATA = df_KSI_Dropped.loc[df_KSI_Dropped['LATITUDE'].notnull(),
+                                   'LATITUDE'].unique()
+# 4500 UNIQUE DATA. --> CANDIDATE TO DROP
+
+LONGITUDE_DATA = df_KSI_Dropped.loc[df_KSI_Dropped['LONGITUDE'].notnull(),
+                                    'LONGITUDE'].unique()
+# 4937 UNIQUE DATA. --> CANDIDATE TO DROP
+
+
+# POSITITION GEOGRAFIC IS DEFINE BY THE FOLLOWING COLUMNS : LATITUDE, LOGITUDE,
+# HOOD, NEIGHBOURHOOD, DIVISION, STREETS
+# WE ARE MANTAIN ONLY ONE ("HOOD_158") AND OTHER WE ARE DROPPING. 
 
 df_KSI_Dropped2 = df_KSI_Dropped.drop(["ACCLASS", "ACCNUM",
-                                       "NEIGHBOURHOOD_140", "NEIGHBOURHOOD_158",
-                                       "HOOD_140","HOOD_158","INJURY"], axis=1)
+                                       "NEIGHBOURHOOD_140",
+                                       "NEIGHBOURHOOD_158", "HOOD_140",
+                                       "INJURY","DIVISION"], axis=1)
 
 print(df_KSI_Dropped2.dtypes)
 
-'INJURY'
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ##############################################################################
 # 2.2. Feature selection – use pandas and sci-kit learn.
 # (The group needs to justify each feature used and any data columns discarded)
 # Define the columns for feature selection
-float_columns = ['LATITUDE', 'LONGITUDE', 'PEDESTRIAN', 'CYCLIST',
-                 'AUTOMOBILE', 'MOTORCYCLE', 'TRUCK', 'TRSN_CITY_VEH',
-                 'EMERG_VEH', 'PASSENGER', 'SPEEDING', 'AG_DRIV', 'REDLIGHT',
-                 'ALCOHOL', 'DISABILITY']
-
+float_columns = ['PEDESTRIAN', 'CYCLIST', 'AUTOMOBILE', 'MOTORCYCLE', 'TRUCK',
+                 'TRSN_CITY_VEH', 'EMERG_VEH', 'PASSENGER', 'SPEEDING', 'AG_DRIV', 'REDLIGHT', 'ALCOHOL', 'DISABILITY']
 int_columns = ['YEAR', 'TIME', 'MONTH']
+object_columns = ['ROAD_CLASS', 'DISTRICT', 'LOCCOORD', 'TRAFFCTL',
+                  'VISIBILITY', 'LIGHT', 'RDSFCOND', 'IMPACTYPE', 'INVTYPE', 'INVAGE', 'INITDIR',
+                  'VEHTYPE', 'MANOEUVER', 'DRIVACT', 'DRIVCOND','HOOD_158']
 
-object_columns = [ 'ROAD_CLASS', 'DISTRICT', 'LOCCOORD', 'ACCLOC', 'TRAFFCTL',
-                  'VISIBILITY', 'LIGHT', 'RDSFCOND', 'IMPACTYPE', 'INVTYPE',
-                  'INVAGE', 'INITDIR', 'VEHTYPE', 'MANOEUVER', 'DRIVACT',
-                  'DRIVCOND', 'DIVISION']
 
-X = df_KSI_Dropped2[float_columns + int_columns + object_columns].copy()
+# Convert all the object columns to string type
+for column in object_columns:
+    df_KSI_Dropped2[column] = df_KSI_Dropped2[column].astype(str)
+
+
+# Concatenate all feature names
+features = float_columns + int_columns + object_columns
+
+# Split the data into X and y
+X = df_KSI_Dropped2[features]
 y = df_KSI_Dropped2['ACCLASS_TARG']
 
-print(y.isnull().sum())  # check for NaN values
 # Removing rows with NaN target values --> 5 row
 nan_mask = y.isnull()
 X = X[~nan_mask]
 y = y[~nan_mask]
 
-# 2.1. Data transformations – includes handling missing data, categorical data
-# management, data normalization and standardizations as needed.
-# Define the preprocessing for float and int columns
-float_transformer = Pipeline(steps=[
-    ('imputer', SimpleImputer(strategy='mean'))
-])
-
-int_transformer = Pipeline(steps=[
-    ('imputer', SimpleImputer(strategy='mean'))
-])
-
-def convert_to_string(df):
-    return df.astype(str)
-string_converter = FunctionTransformer(convert_to_string)
-
-# Update categorical transformer pipeline
-cat_transformer = Pipeline(steps=[
-    ('imputer', SimpleImputer(strategy='constant', fill_value='NA')),
-    ('string_converter', string_converter),
+# Create transformers
+numerical_transformer = SimpleImputer(strategy='mean')
+categorical_transformer = Pipeline(steps=[
+    ('imputer', SimpleImputer(strategy='constant', fill_value='missing')),
     ('onehot', OneHotEncoder(handle_unknown='ignore'))
 ])
 
+# Combine transformers
 preprocessor = ColumnTransformer(
     transformers=[
-        ('num_float', float_transformer, float_columns),
-        ('num_int', int_transformer, int_columns),
-        ('cat', cat_transformer, object_columns)
+        ('num', numerical_transformer, float_columns + int_columns),
+        ('cat', categorical_transformer, object_columns)
     ])
 
-# Define a new pipeline for feature importance calculation
-clf_rf = Pipeline(steps=[('preprocessor', preprocessor),
-                         ('classifier', RandomForestRegressor(random_state=42))])
+# Combine preprocessor and model in one pipeline
+model = Pipeline(steps=[('preprocessor', preprocessor),
+                        ('classifier', RandomForestRegressor(random_state=42))])
 
-# Fit the new pipeline
-clf_rf.fit(X, y)
+# Split data
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
 
-# Get the feature importances
-importances = clf_rf.named_steps['classifier'].feature_importances_
+# Fit the model
+model.fit(X_train, y_train)
 
-# Get feature names after transformation, if any
-try:
-    feature_names = clf_rf.named_steps['preprocessor'].transformers_[2][1]\
-                       .named_steps['onehot'].get_feature_names(input_features=object_columns)
-except AttributeError:
-    feature_names = object_columns
+# Get feature importances
+importances = model.named_steps['classifier'].feature_importances_
 
+# Get one hot encoder feature names
+ohe_feature_names = model.named_steps['preprocessor'].transformers_[1][1].named_steps['onehot'].get_feature_names_out(object_columns)
 
-feature_names = np.concatenate([float_columns, int_columns, feature_names])
+# Concat numerical columns names and one-hot encoder column names
+feature_names = np.concatenate([float_columns, int_columns, ohe_feature_names])
 
 # Create a DataFrame to store the features and their respective importance
 important_features_df = pd.DataFrame({
@@ -797,138 +850,15 @@ important_features_df = pd.DataFrame({
 important_features_df = important_features_df.sort_values(by='Importance', ascending=False)
 
 # Plot the top 10 important features
-important_features_df.head(20).plot(kind='barh', x='Feature', y='Importance', legend=False)
+important_features_df.head(15).plot(kind='barh', x='Feature', y='Importance', legend=False)
 plt.xlabel('Importance')
 plt.ylabel('Feature')
 plt.gca().invert_yaxis()
 plt.show()
 
 
-##############################################################################
-# Define the columns for feature selection
-# float_columns = ['LATITUDE', 'LONGITUDE', 'PEDESTRIAN', 'CYCLIST',
-#                  'AUTOMOBILE', 'MOTORCYCLE', 'TRUCK', 'TRSN_CITY_VEH',
-#                  'EMERG_VEH', 'PASSENGER', 'SPEEDING', 'AG_DRIV', 'REDLIGHT',
-#                  'ALCOHOL', 'DISABILITY']
-
-# int_columns = ['YEAR', 'TIME', 'MONTH']
-
-# object_columns = ['ROAD_CLASS', 'DISTRICT', 'LOCCOORD', 'TRAFFCTL',
-#                   'VISIBILITY', 'LIGHT', 'RDSFCOND', 'IMPACTYPE', 'INVTYPE',
-#                   'INVAGE', 'INITDIR', 'VEHTYPE', 'MANOEUVER', 'DRIVACT',
-#                   'DRIVCOND','DIVISION']
-
-# # Convert all the object columns to string type
-# for column in object_columns:
-#     df_KSI_Dropped2[column] = df_KSI_Dropped2[column].astype(str)
-
-# # Concatenate all feature names
-# features = float_columns + int_columns + object_columns
-
-# # Split the data into X and y
-# X = df_KSI_Dropped2[features]
-# y = df_KSI_Dropped2['ACCLASS_TARG']
-
-# # Removing rows with NaN target values --> 5 row
-# nan_mask = y.isnull()
-# X = X[~nan_mask]
-# y = y[~nan_mask]
-
-# # Create transformers
-# numerical_transformer = SimpleImputer(strategy='mean')
-# categorical_transformer = Pipeline(steps=[
-#     ('imputer', SimpleImputer(strategy='constant', fill_value='missing')),
-#     ('onehot', OneHotEncoder(handle_unknown='ignore'))
-# ])
-
-# # Combine transformers
-# preprocessor = ColumnTransformer(
-#     transformers=[
-#         ('num', numerical_transformer, float_columns + int_columns),
-#         ('cat', categorical_transformer, object_columns)
-#     ])
-
-# # Combine preprocessor and model in one pipeline
-# model = Pipeline(steps=[('preprocessor', preprocessor),
-#                         ('classifier', RandomForestRegressor(random_state=42))])
-
-# # Split data
-# X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
-
-# # Fit the model
-# model.fit(X_train, y_train)
-
-# # Get feature importances
-# importances = model.named_steps['classifier'].feature_importances_
-
-# # Get one hot encoder feature names
-# ohe_feature_names = model.named_steps['preprocessor'].transformers_[1][1].named_steps['onehot'].get_feature_names(object_columns)
-
-# # Concat numerical columns names and one-hot encoder column names
-# feature_names = np.concatenate([float_columns, int_columns, ohe_feature_names])
-
-# # Create a DataFrame to store the features and their respective importance
-# important_features_df = pd.DataFrame({
-#     'Feature': feature_names,
-#     'Importance': importances
-# })
-
-# # Sort the DataFrame in descending order of importance
-# important_features_df = important_features_df.sort_values(by='Importance', ascending=False)
-
-# # Plot the top 10 important features
-# important_features_df.head(15).plot(kind='barh', x='Feature', y='Importance', legend=False)
-# plt.xlabel('Importance')
-# plt.ylabel('Feature')
-# plt.gca().invert_yaxis()
-# plt.show()
 
 ################################################################
-y = df_KSI_Dropped['ACCLASS_TARG']
-
-# features = df_KSI_Dropped.drop(["ACCLASS", "ACCLASS_TARG","FATAL_NO"], axis=1)
-features = df_KSI_Dropped.drop(["ACCLASS", "ACCLASS_TARG"], axis=1)
-
-print(features.isnull().sum())
-
-nan_mask = features.isnull()
-X = X[~nan_mask]
-features = features[~nan_mask]
-
-
-X = features.iloc[:,0:48]  #independent columns
-print(X.isnull().sum())
-#cols=["ACCNUM","DAY","LATITUDE","LONGITUDE","Hood_ID","STREET1","STREET2","ROAD_CLASS","LOCCOORD","LIGHT","RDSFCOND","ACCLASS","IMPACTYPE","INVTYPE","INVAGE","INJURY","FATAL_NO","INITDIR","MANOEUVER","DRIVCOND","PEDESTRIAN","CYCLIST","PASSENGER","HOUR","MINUTES","YEAR","ACCLOC","WEEKDAY","Hood_Name","Ward_Name","Ward_ID","Division","District","MONTH","VEHTYPE"]
-
-cols=['ACCNUM','YEAR', 'TIME', 'MONTH','LATITUDE', 'LONGITUDE', 'PEDESTRIAN',
-      'CYCLIST', 'AUTOMOBILE', 'MOTORCYCLE', 'TRUCK', 'TRSN_CITY_VEH',
-      'EMERG_VEH', 'PASSENGER', 'SPEEDING', 'AG_DRIV', 'REDLIGHT', 'ALCOHOL',
-      'DISABILITY', 'ROAD_CLASS', 'DISTRICT', 'LOCCOORD', 'TRAFFCTL',
-      'VISIBILITY', 'LIGHT', 'RDSFCOND', 'IMPACTYPE', 'INVTYPE', 'INVAGE',
-      'INJURY', 'INITDIR', 'VEHTYPE', 'MANOEUVER', 'DRIVACT', 'DRIVCOND',
-      'HOOD_158', 'NEIGHBOURHOOD_158', 'HOOD_140', 'NEIGHBOURHOOD_140',
-      'DIVISION']
-
-X=X.drop(columns=cols)
-X1=X
-X1["NEIGHBOURHOOD_140"]=df_KSI_Dropped['NEIGHBOURHOOD_140']
-X1["NEIGHBOURHOOD_158"]=df_KSI_Dropped['NEIGHBOURHOOD_158']
-X1["DISTRICT"]=df_KSI_Dropped['DISTRICT']
-print(X1.shape)
-print(X.info())
-print(X.columns)
-print(X.dtypes)
-
-
-X = pd.get_dummies(X)
-#y = feature.iloc[:,-1]    #target column i.e price range
-model = ExtraTreesClassifier()
-model.fit(X,y)
- #use inbuilt class feature_importances of tree based classifiers
-#plot graph of feature importances for better visualization
-feat_importances = pd.Series(model.feature_importances_, index=X.columns)
-feat_importances.nlargest(10).plot(kind='barh')
-plt.show()
 
 # 2.3. Train, Test data splitting – use numpy, sci-kit learn.
 # 2.4. Managing imbalanced classes if needed. Check here for info:
