@@ -18,10 +18,8 @@ from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder
 import folium
 from folium.plugins import HeatMap
-from sklearn.preprocessing import FunctionTransformer
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split
-from sklearn.ensemble import ExtraTreesClassifier
 
 
 ##############################################################################
@@ -198,6 +196,7 @@ print(df_KSI_Dropped['ACCLASS'].isnull())
 df_KSI_Dropped['ACCLASS'] = np.where(df_KSI_Dropped['ACCLASS'] ==
                                      'Property Damage Only', 'No-Fatal',
                                      df_KSI_Dropped['ACCLASS'])
+
 df_KSI_Dropped['ACCLASS'] = np.where(df_KSI_Dropped['ACCLASS'] ==
                                      'Non-Fatal Injury', 'No-Fatal',
                                      df_KSI_Dropped['ACCLASS'])
@@ -466,18 +465,32 @@ plt.xticks(range(7), ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday',
 plt.xlabel('Weekday')
 plt.title('Number of Accidents by Weekday')
 plt.show()
+df_KSI_Dropped['WEEKDAY'] = df_KSI_Dropped['DATE'].dt.weekday
 
 ##############################################################################
 # DRIVING CONDITION VS ACCIDENT
 
 # creating a pivot table for accidents causing by 'SPEEDING', 'AG_DRIV',
 # 'REDLIGHT', 'ALCOHOL'
+df_KSI_Dropped['NOCONDITION'] = (df_KSI_Dropped['SPEEDING'].astype(int) |
+                                  df_KSI_Dropped['AG_DRIV'].astype(int)  |
+                                  df_KSI_Dropped['REDLIGHT'].astype(int) |
+                                  df_KSI_Dropped['ALCOHOL'].astype(int))
+df_KSI_Dropped['NOCONDITION'] = np.logical_xor(df_KSI_Dropped['NOCONDITION'],
+                                                1).astype(int)
+
+df_KSI_pivot_cause = df_KSI_Dropped.pivot_table(index='YEAR',
+                                                values=['SPEEDING', 'AG_DRIV',
+                                                        'REDLIGHT', 'ALCOHOL'],
+                                                aggfunc=np.sum,
+                                                margins = True)
+
 df_KSI_pivot_cause = df_KSI_Dropped.pivot_table(index='YEAR', 
                            values = ['SPEEDING', 'AG_DRIV', 'REDLIGHT',
-                                     'ALCOHOL'],
+                                     'ALCOHOL', 'NOCONDITION'],
                            aggfunc=np.sum,
                            margins = True,
-                           margins_name = 'Total Under Category')
+                           margins_name = 'All')
 fig, ax1 = plt.subplots(figsize=(12,6))
 df_KSI_pivot_cause.iloc[17].plot(kind='pie', ax=ax1,
                                  autopct='%3.1f%%',fontsize=10)
@@ -490,18 +503,6 @@ plt.title('Driving condition VS Accidents')
 # Accidents causing by 'SPEEDING', 'AG_DRIV', 'REDLIGHT', 'ALCOHOL' in the
 # last 15 years
 
-# df_KSI_Dropped['NOCONDITION'] = (df_KSI_Dropped['SPEEDING'].astype(int) |
-#                                  df_KSI_Dropped['AG_DRIV'].astype(int)  |
-#                                  df_KSI_Dropped['REDLIGHT'].astype(int) |
-#                                  df_KSI_Dropped['ALCOHOL'].astype(int))
-# df_KSI_Dropped['NOCONDITION'] = np.logical_xor(df_KSI_Dropped['NOCONDITION'],
-#                                                1).astype(int)
-
-df_KSI_pivot_cause = df_KSI_Dropped.pivot_table(index='YEAR',
-                                                values=['SPEEDING', 'AG_DRIV',
-                                                        'REDLIGHT', 'ALCOHOL'],
-                                                aggfunc=np.sum,
-                                                margins = True)
 # Drop the 'All' row from the pivot table
 df_KSI_pivot_cause.drop('All', axis=0, inplace=True)
 
@@ -748,51 +749,25 @@ df_KSI_Dropped2 = df_KSI_Dropped.drop(["ACCLASS", "ACCNUM",
 print(df_KSI_Dropped2.dtypes)
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ##############################################################################
 # 2.2. Feature selection – use pandas and sci-kit learn.
 # (The group needs to justify each feature used and any data columns discarded)
 # Define the columns for feature selection
 float_columns = ['PEDESTRIAN', 'CYCLIST', 'AUTOMOBILE', 'MOTORCYCLE', 'TRUCK',
-                 'TRSN_CITY_VEH', 'EMERG_VEH', 'PASSENGER', 'SPEEDING', 'AG_DRIV', 'REDLIGHT', 'ALCOHOL', 'DISABILITY']
-int_columns = ['YEAR', 'TIME', 'MONTH']
+                 'TRSN_CITY_VEH', 'EMERG_VEH', 'PASSENGER', 'SPEEDING',
+                 'AG_DRIV', 'REDLIGHT', 'ALCOHOL', 'DISABILITY']
+
+int_columns = ['WEEKDAY', 'TIME', 'MONTH']
+
 object_columns = ['ROAD_CLASS', 'DISTRICT', 'LOCCOORD', 'TRAFFCTL',
-                  'VISIBILITY', 'LIGHT', 'RDSFCOND', 'IMPACTYPE', 'INVTYPE', 'INVAGE', 'INITDIR',
-                  'VEHTYPE', 'MANOEUVER', 'DRIVACT', 'DRIVCOND','HOOD_158']
+                  'VISIBILITY', 'LIGHT', 'RDSFCOND', 'IMPACTYPE', 'INVTYPE',
+                  'INVAGE', 'INITDIR', 'VEHTYPE', 'MANOEUVER', 'DRIVACT',
+                  'DRIVCOND','HOOD_158']
 
 
 # Convert all the object columns to string type
-for column in object_columns:
-    df_KSI_Dropped2[column] = df_KSI_Dropped2[column].astype(str)
+# for column in object_columns:
+#     df_KSI_Dropped2[column] = df_KSI_Dropped2[column].astype(str)
 
 
 # Concatenate all feature names
@@ -826,7 +801,8 @@ model = Pipeline(steps=[('preprocessor', preprocessor),
                         ('classifier', RandomForestRegressor(random_state=42))])
 
 # Split data
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2,
+                                                    random_state=0)
 
 # Fit the model
 model.fit(X_train, y_train)
@@ -847,20 +823,21 @@ important_features_df = pd.DataFrame({
 })
 
 # Sort the DataFrame in descending order of importance
-important_features_df = important_features_df.sort_values(by='Importance', ascending=False)
+important_features_df = important_features_df.sort_values(by='Importance',
+                                                          ascending=False)
 
 # Plot the top 10 important features
-important_features_df.head(15).plot(kind='barh', x='Feature', y='Importance', legend=False)
+important_features_df.head(15).plot(kind='barh', x='Feature', y='Importance',
+                                    legend=False)
 plt.xlabel('Importance')
 plt.ylabel('Feature')
 plt.gca().invert_yaxis()
 plt.show()
 
 
+# for i, value in enumerate(df_KSI_Dropped['ACCLASS_TARG'].isna()):
+#   if value == True:
+#     print(i)
 
 ################################################################
 
-# 2.3. Train, Test data splitting – use numpy, sci-kit learn.
-# 2.4. Managing imbalanced classes if needed. Check here for info:
-#  https://elitedatascience.com/imbalanced-classes (https://elitedatascience.com/imbalanced-classes)
-# 2.5. Use pipelines class to streamline all the pre-processing transformations.
