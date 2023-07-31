@@ -216,16 +216,18 @@ df_KSI_Dropped = df_KSI_Dropped.drop(["DATE"], axis=1)
 
 
 
-#################### 3. Predictive model building
+#################### 3. Predictive model building ###########################
 from sklearn.model_selection import KFold
 from sklearn.model_selection import cross_val_score
 from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.svm import SVC
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.neural_network import MLPClassifier
+
 from sklearn.metrics import classification_report
 from sklearn.metrics import confusion_matrix
-from sklearn.svm import SVC
-
-
+from sklearn.metrics import RocCurveDisplay, roc_curve
 
 # -------------------------- data selection
 
@@ -284,111 +286,88 @@ preprocessor = ColumnTransformer(
         ('cat', categorical_transformer, object_columns),
     ])
 
+# 3. Predictive model building
+
+# 3.1. Use logistic regression, decision trees, SVM, Random forest and neural
+# networks  algorithms as a minimum– use scikit learn
+# 3.2. Fine tune the models using Grid search and randomized grid search. 
+
 # --------------------------------- Models
+print ('\n############ 3. Predictive model building ###############')
 # a) Logistic regression
-print ('\n############ Logistic Regression ###############')
-LR_clf_Matheus = LogisticRegression(solver="lbfgs",
+print ('\n--------------- Logistic Regression ---------------')
+LR_clf = LogisticRegression(solver="lbfgs",
                                     max_iter=3000, C=10, tol=0.1)
 
 # Combine preprocessor and model in one pipeline
-model = Pipeline(steps=[('preprocessor', preprocessor),
-                        ('classifier', LR_clf_Matheus)])
+LR_model = Pipeline(steps=[('preprocessor', preprocessor),
+                           ('classifier', LR_clf)])
 
 # Fit the model
-model.fit(X_train, y_train)
+LR_model.fit(X_train, y_train)
 
 # Cross validation
 crossvalidation = KFold(n_splits=10, shuffle=True, random_state=4)
 
-score = np.mean(cross_val_score(model,
+score = np.mean(cross_val_score(LR_model,
                                 X_train,
                                 y_train, scoring='accuracy',
                                 cv=crossvalidation, n_jobs=-1))
 print ('The score of the 10 fold run is: ', score)
 
-train_score = model.score(X_train, y_train)
-test_score = model.score(X_test, y_test)
+train_score = LR_model.score(X_train, y_train)
+test_score = LR_model.score(X_test, y_test)
 print('Train score: ', train_score)
 print('Test score: ', test_score)
-
-# matrix and scores
-def report(X_test, y_test):
-  y_test_pred = model.predict(X_test)
-  print("\n" + classification_report(y_test, y_test_pred))
-  
-  conf_matrix = confusion_matrix(y_test, y_test_pred)
-  
-  plt.figure(figsize=(8,8))
-  sns.set(font_scale = 1.5)
-  
-  ax = sns.heatmap(
-      conf_matrix, annot=True, fmt='d', 
-      cbar=False, cmap='flag', vmax=500 
-  )
-  
-  ax.set_xlabel("Predicted", labelpad=20)
-  ax.set_ylabel("Actual", labelpad=20)
-  plt.show()
-  return conf_matrix
-
-report(X_test, y_test)
 #-------------------
 
 # b) Decision Tree
-print ('\n############ Decision Tree ###############')
-clf_matheus = DecisionTreeClassifier(max_depth=5, criterion = 'entropy',
+print ('\n--------------- Decision Tree ---------------')
+DT_clf = DecisionTreeClassifier(max_depth=5, criterion = 'entropy',
                                      random_state=4)
 
 # Combine preprocessor and model in one pipeline
-model = Pipeline(steps=[('preprocessor', preprocessor),
-                        ('classifier', clf_matheus)])
+DT_model = Pipeline(steps=[('preprocessor', preprocessor),
+                        ('classifier', DT_clf)])
 
 # Fit the model
-model.fit(X_train, y_train)
+DT_model.fit(X_train, y_train)
 
 # Cross validation.
-crossvalidation = KFold(n_splits=10, shuffle=True, random_state=4)
-
-score = np.mean(cross_val_score(model,
+score = np.mean(cross_val_score(DT_model,
                                 X_train,
                                 y_train, scoring='accuracy',
                                 cv=crossvalidation, n_jobs=-1))
 print ('The score of the 10 fold run is: ', score)
 
-train_score = model.score(X_train, y_train)
-test_score = model.score(X_test, y_test)
+train_score = DT_model.score(X_train, y_train)
+test_score = DT_model.score(X_test, y_test)
 print('Train score: ', train_score)
 print('Test score: ', test_score)
-
-report(X_test, y_test)
 #-------------------
 
 # c) SVM
-print ('\n############ Suport Vector Machine ###############')
-svc_clf = SVC(kernel='rbf')
+print ('\n--------------- Suport Vector Machine ---------------')
+SVC_clf = SVC(kernel='rbf')
 
 # Combine preprocessor and model in one pipeline
-model = Pipeline(steps=[('preprocessor', preprocessor),
-                        ('classifier', svc_clf)])
+SVC_model = Pipeline(steps=[('preprocessor', preprocessor),
+                        ('classifier', SVC_clf)])
 
 # Fit the model
-model.fit(X_train, y_train)
+SVC_model.fit(X_train, y_train)
 
 # Cross validation.
-crossvalidation = KFold(n_splits=10, shuffle=True, random_state=4)
-
-score = np.mean(cross_val_score(model,
+score = np.mean(cross_val_score(SVC_model,
                                 X_train,
                                 y_train, scoring='accuracy',
                                 cv=crossvalidation, n_jobs=-1))
 print ('The score of the 10 fold run is: ', score)
 
-train_score = model.score(X_train, y_train)
-test_score = model.score(X_test, y_test)
+train_score = SVC_model.score(X_train, y_train)
+test_score = SVC_model.score(X_test, y_test)
 print('Train score: ', train_score)
 print('Test score: ', test_score)
-
-report(X_test, y_test)
 #-------------------
 
 # # d) Random Forest
@@ -419,31 +398,86 @@ report(X_test, y_test)
 # display_scores(forest_rmse_scores)
 
 # d) Random Forest
-from sklearn.ensemble import RandomForestClassifier
-
-print ('\n############ Random Forest ###############')
-forest_reg = RandomForestClassifier(n_estimators=100, random_state=4)
+print ('\n--------------- Random Forest ---------------')
+Forest_clf = RandomForestClassifier(n_estimators=100, random_state=4)
 
 # Combine preprocessor and model in one pipeline
-model = Pipeline(steps=[('preprocessor', preprocessor),
-                        ('classifier', forest_reg)])
+Forest_model = Pipeline(steps=[('preprocessor', preprocessor),
+                        ('classifier', Forest_clf)])
 
 # Fit the model
-model.fit(X_train, y_train)
+Forest_model.fit(X_train, y_train)
 
 # Cross validation.
-crossvalidation = KFold(n_splits=10, shuffle=True, random_state=4)
-
-score = np.mean(cross_val_score(model,
+score = np.mean(cross_val_score(Forest_model,
                                 X_train,
                                 y_train, scoring='accuracy',
                                 cv=crossvalidation, n_jobs=-1))
 print ('The score of the 10 fold run is: ', score)
 
-train_score = model.score(X_train, y_train)
-test_score = model.score(X_test, y_test)
+train_score = Forest_model.score(X_train, y_train)
+test_score = Forest_model.score(X_test, y_test)
 print('Train score: ', train_score)
 print('Test score: ', test_score)
-
-report(X_test, y_test)
 #-------------------
+
+# e) SVM
+print ('\n--------------- Neural Network ---------------')
+NN_clf = MLPClassifier(random_state=4)
+
+# Combine preprocessor and model in one pipeline
+NN_model = Pipeline(steps=[('preprocessor', preprocessor),
+                        ('classifier', NN_clf)])
+
+# Fit the model
+NN_model.fit(X_train, y_train)
+
+# Cross validation.
+score = np.mean(cross_val_score(NN_model,
+                                X_train,
+                                y_train, scoring='accuracy',
+                                cv=crossvalidation, n_jobs=-1))
+print ('The score of the 10 fold run is: ', score)
+
+train_score = NN_model.score(X_train, y_train)
+test_score = NN_model.score(X_test, y_test)
+print('Train score: ', train_score)
+print('Test score: ', test_score)
+#-------------------
+
+####################### 4. Model scoring and evaluation ######################
+# 4.1. Present results as accuracy , precision, recall, F1 scores, confusion
+# matrices and plot the ROC curves of the models - use sci-kit learn
+print ('\n############ 4. Model scoring and evaluation ###############')
+ 
+def report(model, name, X_test, y_test):
+  print ('\n---------------', name, '---------------')
+  y_test_pred = model.predict(X_test)
+  print("\n" + classification_report(y_test, y_test_pred))
+  
+  conf_matrix = confusion_matrix(y_test, y_test_pred)
+  
+  plt.figure(figsize=(8,8))
+  sns.set(font_scale = 1.5)
+  
+  ax = sns.heatmap(
+      conf_matrix, annot=True, fmt='d', 
+      cbar=False, cmap='flag', vmax=500 
+  )
+  # y_score = model.decision_function(X_test)
+  # fpr, tpr, _ = roc_curve(y_test, y_score)
+  # roc_display = RocCurveDisplay(fpr=fpr, tpr=tpr).plot()
+
+  plt.title(name)
+  ax.set_xlabel("Predicted", labelpad=20)
+  ax.set_ylabel("Actual", labelpad=20)
+  plt.show()
+  return conf_matrix
+
+report(LR_model, 'Logistic Regression', X_test, y_test)
+report(DT_model, 'Decision Tree', X_test, y_test)
+report(SVC_model, 'Suppoert Vector Machine', X_test, y_test)
+report(Forest_model, 'Random Forest', X_test, y_test)
+report(NN_model, 'Neural Network', X_test, y_test)
+
+# 4.2. Select and recommend the best performing model
