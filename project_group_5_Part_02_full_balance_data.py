@@ -1014,7 +1014,19 @@ report(Forest_model, 'Random Forest', X_test, y_test)
 report(NN_model, 'Neural Network', X_test, y_test)
 
 
+#######   5.- Export MODEL
+# Serialie
+import joblib 
+joblib.dump(LR_model, '/Users/josemuniz/Desktop/COMP247/Project/LR_model.pkl')
+joblib.dump(DT_model, '/Users/josemuniz/Desktop/COMP247/Project/DT_model.pkl')
+joblib.dump(SVC_model, '/Users/josemuniz/Desktop/COMP247/Project/SVC_model.pkl')
+joblib.dump(Forest_model, '/Users/josemuniz/Desktop/COMP247/Project/Forest_model.pkl')
+joblib.dump(NN_model, '/Users/josemuniz/Desktop/COMP247/Project/NN_model.pkl')
+print("Model dumped!")
 
+
+joblib.dump(Best_features, '/Users/josemuniz/Desktop/COMP247/Project/Best_features.pkl')
+print("Models columns dumped!")
 
 
 
